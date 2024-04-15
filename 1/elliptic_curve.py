@@ -1,5 +1,6 @@
 import galois
 from sympy import primefactors
+from sympy.ntheory import legendre_symbol
 import random
 import math
 
@@ -35,33 +36,41 @@ class EllipticCurve:
     def __str__(self) -> str:
         return f"y^2 = x^3 + {str(self.a)}xz^4 + {str(self.b)}z^6 over {str(self.F.properties)}"
     
-    # naive implementation, can be very slow for big fields.
     def random_point(self):
         while True:
             x = self.F(random.randint(0, self.field_size-1))
-            x_3 = x**3
-            ax = self.a * x
-            for z in range(1, self.field_size):
-                z = self.F(z)
-                z_2 = z**2
-                z_4 = z_2**2
-                rhs = x_3 + ax * (z_4) + self.b * (z_2*z_4)
+            # z = 1
+            rhs =  x**3 + self.a * x + self.b
+            if legendre_symbol(rhs, self.field_size) == 1:
                 for y in range(self.field_size):
                     y = self.F(y)
                     if y**2 == rhs:
-                        return EllipticPoint(self, x, y, z, check=False)
+                        return EllipticPoint(self, x, y, 1, check=False)
     
     def random_scalar(self):
         return random.randint(1, self.field_size-1)
-                    
-
-    def map_point(self, number):
+    
+    # map a number to a point on the curve, number must be less than the field size. Not all numbers will have a point on the curve
+    def map_to_point(self, number: int):
         if number > self.field_size:
             raise ValueError("Number is too large for the field")
         x = self.F(number)
+        # z = 1
+        rhs =  x**3 + self.a * x + self.b
+        if legendre_symbol(rhs, self.field_size) == 1:
+            for y in range(self.field_size):
+                y = self.F(y)
+                if y**2 == rhs:
+                    return EllipticPoint(self, x, y, 1, check=False)
+        raise ValueError("No point found for this number")
+    
+    def map_from_point(self, point):
+        if isinstance(point, EllipticPoint):
+            return point.x / point.z_2
+        else:
+            raise ValueError("Can only map points")
 
 
-# Only works with elliptic curves over F_2^m, where m > 3
 class EllipticPoint:
 
     def __init__(self, curve: EllipticCurve, x: int, y: int, z:int=1, check=True):
@@ -75,9 +84,7 @@ class EllipticPoint:
         self.y = curve.F(y)
         self.z = curve.F(z)
         self.z_2 = self.z**2
-        self.z_3 = self.z**3
-        self.z_4 = self.z**4
-
+        self.z_3 = self.z_2*self.z
     
     def __add__(self, other):
         if isinstance(other, EllipticPoint):
@@ -117,15 +124,13 @@ class EllipticPoint:
                     z3,
                     check=True
                 )
-
-        
         else:
             raise ValueError("Can't add point to non-point")
     
     def double(self):
         if self == EllipticPoint(self.curve, 0, 1, 0):
             return self
-        lambda1 = self.curve._3 * self.x**2 + self.curve.a * self.z_4
+        lambda1 = self.curve._3 * self.x**2 + self.curve.a * self.z_3*self.z
         z3 = self.curve._2 * self.y * self.z
         y_2 = self.y**2
         lambda2 = self.curve._4 * self.x * y_2
@@ -161,16 +166,37 @@ class EllipticPoint:
             group.append(current)
         return group
     
-    def get_order(self):
-        i = self.curve.field_size
+    # Naive algorithm to get the order of the point, very slow for big fields
+    def get_order_naive(self):
+        i = 2
         point_at_infinity = EllipticPoint(self.curve, 0, 1, 0)
-        current = self * i
-        while i > 0:
-            current = current - self
+        current = self
+        while True:
+            current = current + self
             if current == point_at_infinity:
                 return i
-            i -= 1 
+            i += 1 
+    
+    # Small steps big steps algorithm
+    def get_order(self):
+        # Upperlimit for the order of the curve
+        n = int((self.curve.field_size + self.curve.field_size**0.5) ** 0.5)+1
 
+        small_steps = {EllipticPoint(self.curve, 0,1,0): 0}
+        k = self
+        for i in range(1, n):
+            if small_steps.__contains__(k) == False:
+                small_steps[k] = i
+            else:
+                return i
+            k += self
+    
+        big_step = (-self)*n
+        current = big_step
+        for i in range(1, n):
+            if current in small_steps:
+                return n*i + small_steps[current]
+            current += big_step
     
     def __mul__(self, n: int):
         if n == 0:
@@ -200,18 +226,17 @@ class EllipticPoint:
         if self.z == self.curve._0:
             return f"Point at infinity in {str(self.curve)}" 
         else:
-            return f"({str(self.x / self.z**2)}, {str(self.y / self.z**3)}) in {str(self.curve)}"
+            return f"({str(self.x / self.z_2)}, {str(self.y / self.z_3)}) in {str(self.curve)}"
     
     def __hash__(self) -> int:
         if self.z == 0:
             return hash(('infinity'))
-        nx = self.x * self.z_2
-        ny = self.y * self.z_3
+        nx = self.x / self.z_2
+        ny = self.y / self.z_3
         return hash((str(nx), str(ny)))
-
 
     def __eq__(self, other: EllipticCurve) -> bool:
         if self.z == self.curve._0 or other.z == other.curve._0:
             return self.z == other.z
         else:
-            return (self.x * self.z_2 == other.x * other.z_2) and (self.y * self.z_3 == other.y * other.z_3)
+            return (self.x / self.z_2 == other.x / other.z_2) and (self.y / self.z_3 == other.y / other.z_3)
