@@ -2,16 +2,17 @@ import galois
 from sympy import primefactors
 from sympy.ntheory import legendre_symbol
 import random
-import math
 
 class EllipticCurve:
     def __init__(self, a:int, b:int, p: int, n: int):
         self.field_size = p ** n
-        if len(primefactors(self.field_size)) > 1:
+        if len(primefactors(p)) > 1:
             raise ValueError("The field size must only have one prime factor!")
         if p <= 1 or n <= 0 or (p == 2 and n <= 1) :
             raise ValueError("The field must be of a larger degree than 2")
         self.F = galois.GF(self.field_size)
+        self.p = p
+        self.n = n
         self.a = self.F(a)
         self.b = self.F(b)
         self._0 = self.F(0)
@@ -41,7 +42,7 @@ class EllipticCurve:
             x = self.F(random.randint(0, self.field_size-1))
             # z = 1
             rhs =  x**3 + self.a * x + self.b
-            if legendre_symbol(rhs, self.field_size) == 1:
+            if self.p == 2 or legendre_symbol(rhs, self.p) == 1:
                 for y in range(self.field_size):
                     y = self.F(y)
                     if y**2 == rhs:
@@ -57,7 +58,7 @@ class EllipticCurve:
         x = self.F(number)
         # z = 1
         rhs =  x**3 + self.a * x + self.b
-        if legendre_symbol(rhs, self.field_size) == 1:
+        if self.p == 2 or legendre_symbol(rhs, self.p) == 1:
             for y in range(self.field_size):
                 y = self.F(y)
                 if y**2 == rhs:
@@ -177,7 +178,7 @@ class EllipticPoint:
                 return i
             i += 1 
     
-    # Small steps big steps algorithm
+    # Baby step giant step algorithm
     def get_order(self):
         # Upperlimit for the order of the curve
         n = int((self.curve.field_size + self.curve.field_size**0.5) ** 0.5)+1
