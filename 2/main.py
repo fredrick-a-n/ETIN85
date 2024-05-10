@@ -25,6 +25,7 @@ def solve_mod_poly(c, N, printline: bool=false):
         print(f"Solution mod N: {ccmod}")
 
     sol = ccmod.roots()
+    sol = sorted(sol, key=lambda x: x[0])
     for s in sol:
         if f(s[0]) % N == 0:
             return s[0]
@@ -43,7 +44,6 @@ def toy_polynomial():
     print("Solving for N = 1073741827 and c = [507878743171, 9003, 1]")
     s = solve_mod_poly(c, N, True)
     return s
-    
 
 if __name__ == '__main__':
     print(f"Root: {test_polynomial()}")

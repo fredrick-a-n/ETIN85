@@ -23,9 +23,10 @@ def coppersmiths(c, N):
     f = R(c)
     d = f.degree()
     m = d
-    X = int(N**(1/d))
-
+    err = 0
     while True:
+        X = int(N**(1/(d + err)))
+
         gs = [] # list of g(u,v)
         for v in range(m + 1):
             for u in range(d):
@@ -46,9 +47,10 @@ def coppersmiths(c, N):
         u = A.inverse() * B.column(0)
         h = sum(u[i] * gs[i] for i in range(len(u)))
 
-        # Check that the polynomial is not a constant
-        if h.degree() == 0:
-            X += 1
-            continue
-        else:
+        if h.degree() > 0:
             return h
+        else:
+            err += 0.1
+            if err > d:
+                raise ValueError("Failed to find a solution")
+            continue
