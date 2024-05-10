@@ -1,18 +1,16 @@
-import sympy as sp
-from sympy.polys.polytools import Poly
+from sage.all import *
 from LLL import LLL
 
-def g(u,v,N,m,f,x):
+def g(u, v, N, m, f, x):
     """
     u: integer
     v: integer
     N: modulus
     m: integer
-    f: sympy polynomial
+    f: polynomial in SageMath
     """
-    p = N**(m-v) 
-    return p * Poly(x**u,x) * f**v
-
+    p = N**(m-v)
+    return p * x**u * f**v
 
 def coppersmiths(c, N):
     """
@@ -20,42 +18,37 @@ def coppersmiths(c, N):
     N: modulus of the polynomial
     """    
 
-    x = sp.symbols('x')
-    f = Poly.from_list(c, gens=x)
+    R = PolynomialRing(ZZ, 'x')
+    x = R.gen()
+    f = R(c)
     d = f.degree()
     m = d
-    X = int(N**(1/d)) 
+    X = int(N**(1/d))
 
     while True:
-        print(f"Trying with X = {X}, m = {m}, d = {d}, N = {N}, f = {f}")
-
         gs = [] # list of g(u,v)
-        for v in range(0, m+1):
-            for u in range(0, d):
-                gs.append(g(u,v,N,m,f,x))
+        for v in range(m + 1):
+            for u in range(d):
+                gs.append(g(u, v, N, m, f, x))
 
-        max_degree = max(sp.degree(gi) for gi in gs) + 1
-        A = sp.zeros(len(gs), max_degree)
+        max_degree = max(gi.degree() for gi in gs) + 1
+        A = matrix(ZZ, len(gs), max_degree)
         
         # construct the lattice
         for i, gi in enumerate(gs):
-            coef = gi.all_coeffs()
-            coef = [c for c in reversed(coef)]
+            coef = gi.coefficients(sparse=False)
             # apply X*x
             for j in range(len(coef)):
                 A[i, j] = coef[j] * X**j
 
         # LLL reduction
         B = LLL(A)
-        u = A.inv() * B[:,0]
-        h = sum(Poly(u[i],x) * gs[i] for i in range(len(u)))
-
-        print(f"Solution h: {h}")
+        u = A.inverse() * B.column(0)
+        h = sum(u[i] * gs[i] for i in range(len(u)))
 
         # Check that the polynomial is not a constant
-        if len(h.free_symbols) == 0:
-            X = X+1
+        if h.degree() == 0:
+            X += 1
             continue
         else:
             return h
- 

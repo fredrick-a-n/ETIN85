@@ -1,31 +1,51 @@
-import sympy as sp
-from sympy.polys.polytools import Poly
+from sage.all import *
 from coppersmiths import coppersmiths
 
-def test_polynomial():
-    x = sp.symbols('x')
-    f = Poly(x**2 + x + 1)
-    N = 7
-    c = f.all_coeffs()
+
+def solve_mod_poly(c, N, printline: bool=false):
+    """
+    c: coefficients of the polynomial, from the lowest degree to the highest
+    N: modulus of the polynomial
+    """
+    R = PolynomialRing(ZZ, 'x')
+    f = R(c)
+
+    if printline:
+        print(f"Trying to solve for N = {N} and f = {f}")
+
     cc = coppersmiths(c, N)
-    cc = Poly([coeff % N for coeff in cc.all_coeffs()],x)
-    print (cc)
-    sol = sp.solve(cc.as_expr(), x)
-    
-    return sol
+
+    if printline:
+        print(f"Found solution: {cc}")
+
+    Rmod = IntegerModRing(N)
+    ccmod = cc.change_ring(Rmod)
+
+    if printline:
+        print(f"Solution mod N: {ccmod}")
+
+    sol = ccmod.roots()
+    for s in sol:
+        if f(s[0]) % N == 0:
+            return s[0]
+    return None
+
+def test_polynomial():
+    N = 7
+    c = [1, 1, 1]
+    print("Solving for N = 7 and c = [1, 1, 1]")
+    s = solve_mod_poly(c, N, True)
+    return s
     
 def toy_polynomial():
-    x = sp.symbols('x')
-    f = Poly(x**2 + 9003*x + 507878743171)
     N = 1073741827
-    c = f.all_coeffs()
-    cc = coppersmiths(c, N)
-    cc = Poly([coeff % N for coeff in cc.all_coeffs()],x)
-    print (cc)
-    sol = sp.solveset(sp.Mod(cc.as_expr(), N), x, domain=sp.S.Integers)
+    c = [507878743171, 9003, 1]
+    print("Solving for N = 1073741827 and c = [507878743171, 9003, 1]")
+    s = solve_mod_poly(c, N, True)
+    return s
     
-    return sol
 
 if __name__ == '__main__':
-    print(test_polynomial())
+    print(f"Root: {test_polynomial()}")
+    print(f"Root: {toy_polynomial()}") 
 
