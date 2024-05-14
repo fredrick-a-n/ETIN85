@@ -25,7 +25,7 @@ def coppersmiths(c, N):
     m = d
     err = 0
     while True:
-        X = int(N**(1/(d + err)))
+        X = int(N**(1/(d - err)))
 
         gs = [] # list of g(u,v)
         for v in range(m + 1):
@@ -46,11 +46,10 @@ def coppersmiths(c, N):
         B = LLL(A)
         u = A.inverse() * B.column(0)
         h = sum(u[i] * gs[i] for i in range(len(u)))
-
-        if h.degree() > 0:
+        if h.degree() > 0: 
             return h
         else:
-            err += 0.1
+            err += 0.01
             if err > d:
                 raise ValueError("Failed to find a solution")
             continue

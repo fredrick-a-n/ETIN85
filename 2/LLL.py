@@ -69,22 +69,16 @@ def LLL(B, delta=0.75):
     Bs = gram_schmidt(BB)
     m = BB.ncols()
     i = 1
-    mus = {}
     while i < m:
         for j in range(i-1, -1, -1):
-            if (i, j) not in mus:
-                mus[(i, j)] = mu(i, j, BB, Bs)
-            if abs(mus[(i, j)]) > 0.5:
-                BB[:, i] -= round(mus[(i, j)]) * BB[:, j]
+            mus = mu(i, j, BB, Bs) 
+            if abs(mus) > 0.5:
+                BB[:, i] -= round(mus) * BB[:, j]
                 Bs = gram_schmidt(BB)
-                mus = {}
-        if (i, i-1) not in mus:
-            mus[(i, i-1)] = mu(i, i-1, BB, Bs)
         if Bs.column(i).dot_product(Bs.column(i)) <= (delta - mu(i, i-1, BB, Bs)**2) * Bs.column(i-1).dot_product(Bs.column(i-1)):
             BB.swap_columns(i, i-1)
             i = max(i-1, 1)
             Bs = gram_schmidt(BB)
-            mus = {}
         else:
             i += 1
 
