@@ -80,14 +80,6 @@ def toy_polynomial():
 
     print(f"Solution: {s}")
 
-def difficult_polynomial():
-    N = (2**30+3) * (2**32 + 15)
-    c = [1942528644709637042, 1234567890123456789, 987654321987654321, 1]
-    print(f"Solving for N = {N} and c = {c}")
-    s = solve_mod_poly(c, N, True)
-
-    print(f"Solution: {s}")
-
 
 def test_knapsack():
     values = [62, 93, 81, 88, 102, 37]
