@@ -38,6 +38,10 @@ def check_LLL_condition(B, delta=0.75):
 def mu(i, j, B, Bs):
     """
     Calculate the Gram-Schmidt coefficient
+    i: index of the column of B
+    j: index of the column of Bs
+    B: Matrix whose columns are basis vectors
+    Bs: Matrix whose columns are orthogonalized basis vectors
     """
     return B.column(i).dot_product(Bs.column(j)) / Bs.column(j).dot_product(Bs.column(j))
 
@@ -45,6 +49,7 @@ def mu(i, j, B, Bs):
 def gram_schmidt(B):
     """
     Orthogonalize the columns of matrix B using Gram-Schmidt process
+    B: Matrix whose columns are vectors to be orthogonalized
     """
     m = B.ncols()
     Bs = Matrix(QQ, B.nrows(), m)
@@ -61,6 +66,8 @@ def gram_schmidt(B):
 def LLL(B, delta=0.75):
     """
     Perform LLL reduction on matrix B with reduction parameter delta
+    B: Matrix whose columns are basis vectors to be reduced
+    delta: Reduction parameter
     """
     if not (0.25 < delta < 1):
         raise ValueError("delta should be in (1/4, 1)")
