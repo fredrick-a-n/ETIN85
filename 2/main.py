@@ -124,12 +124,11 @@ def knapsack():
 
 if __name__ == '__main__':
     test_gram_schmidt()
-    test_gram_schmidt2()
+    # test_gram_schmidt2()
     # test_LLL()
     # test_LLL2()
     # test_polynomial()
     # toy_polynomial()
-    # difficult_polynomial()
     # test_knapsack()
     # test_knapsack2()
     # knapsack()
