@@ -1,0 +1,1 @@
+Simple implementation of a BeDOZa protocol to check if Bob can donate blood to Alice
