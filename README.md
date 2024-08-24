@@ -1,2 +1,2 @@
-ETIN85 Advanced Cryptography
+# ETIN85 Advanced Cryptography
 University of Lund
